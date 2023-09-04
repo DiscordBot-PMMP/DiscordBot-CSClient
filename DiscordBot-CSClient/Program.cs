@@ -50,6 +50,8 @@ while(true) {
         throw new InvalidDataException("Version/Magic does not match expected. (" + version.ToString() + ", " + magic.ToString("X2"));
     }
     Console.WriteLine("Recieved connect packet, version: " + version.ToString() + " , magic: 0x" + magic.ToString("X2"));
+    //await handler.SendAsync(raw_size, SocketFlags.None);
+    //await handler.SendAsync(data, SocketFlags.None); pings back exact same connect packet for testing.
 }
 
 #pragma warning disable CS8321 // Local function is declared but never used
