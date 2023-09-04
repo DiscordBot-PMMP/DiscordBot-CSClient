@@ -12,48 +12,48 @@ namespace DiscordBot_CSClient;
 
 public class SocketData{
 
-	private readonly IPAddress ipAddress;
-	private readonly ushort port;
+    private readonly IPAddress ipAddress;
+    private readonly ushort port;
 
-	private List<List<byte>> outbound;
-    private List<List<byte>> inbound;
+    private List<List<byte>> outbound = new List<List<byte>>();
+    private List<List<byte>> inbound = new List<List<byte>>();
 
     public SocketData(string ipAddress = "0.0.0.0", ushort port = 22222){
-		this.ipAddress = IPAddress.Parse(ipAddress);
-		this.port = port;
-	}
+        this.ipAddress = IPAddress.Parse(ipAddress);
+        this.port = port;
+    }
 
-	public IPAddress getIpAddress(){
-		return ipAddress;
-	}
+    public IPAddress getIpAddress(){
+        return ipAddress;
+    }
 
-	public ushort getPort(){
-		return port;
-	}
-	
-	public List<byte>? readInbound(){
-		if(inbound.Count == 0) {
-			return null;
-		}
-		var c = inbound.First();
-		inbound.RemoveAt(0);
-		return c;
-	}
+    public ushort getPort(){
+        return port;
+    }
+    
+    public List<byte>? readInbound(){
+        if(inbound.Count == 0) {
+            return null;
+        }
+        var c = inbound.First();
+        inbound.RemoveAt(0);
+        return c;
+    }
 
-	public List<byte>? readOutbound() {
-		if(outbound.Count == 0) {
-			return null;
-		}
-		var c = outbound.First();
-		outbound.RemoveAt(0);
-		return c;
-	}
+    public List<byte>? readOutbound() {
+        if(outbound.Count == 0) {
+            return null;
+        }
+        var c = outbound.First();
+        outbound.RemoveAt(0);
+        return c;
+    }
 
-	public void writeInbound(List<byte> data){
-		inbound.Add(data);
-	}
+    public void writeInbound(List<byte> data){
+        inbound.Add(data);
+    }
 
-	public void writeOutbound(List<byte> data){
-		outbound.Add(data);
-	}
+    public void writeOutbound(List<byte> data){
+        outbound.Add(data);
+    }
 }
