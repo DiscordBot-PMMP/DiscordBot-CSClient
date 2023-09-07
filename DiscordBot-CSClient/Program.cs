@@ -9,7 +9,6 @@
 using System.Net;
 using System.Net.Sockets;
 using DiscordBot_CSClient;
-using DiscordBot_CSClient.Socket;
 
 Console.WriteLine("Starting socket.");
 
@@ -36,19 +35,18 @@ while(true) {
     if(received != 4) {
         throw new FormatException("4 bytes expected, received: " + received.ToString());
     }
-    int size = Binary.GetIntBE(raw_size, 0);
-    Console.WriteLine();
+    int size = Binary.GetInt(raw_size, 0);
     var data = new byte[size];
     received = await handler.ReceiveAsync(data, SocketFlags.None);
     if(received != size) {
         throw new FormatException(size.ToString() + " bytes expected, received: " + received.ToString());
     }
-    int packetId = Binary.GetShortBE(data, 0);
+    int packetId = Binary.GetShort(data, 0);
     if(packetId != 100) {
         throw new FormatException("Expected Connect packet (100), received: " + packetId.ToString());
     }
-    int version = Binary.GetByteBE(data, 6);
-    int magic = Binary.GetIntBE(data, 7);
+    int version = Binary.GetByte(data, 6);
+    int magic = Binary.GetInt(data, 7);
     if(version != 2 || magic != 0x4A61786B) {
         throw new InvalidDataException("Version/Magic does not match expected. (" + version.ToString() + ", " + magic.ToString("X2"));
     }
