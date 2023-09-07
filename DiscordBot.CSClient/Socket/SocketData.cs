@@ -8,7 +8,7 @@
 
 using System.Net;
 
-namespace DiscordBot_CSClient.Socket;
+namespace DiscordBot.CSClient.Socket;
 
 public class SocketData {
 
