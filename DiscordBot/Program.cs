@@ -6,51 +6,55 @@
 // Discord :: JaxkDev
 // Email   :: JaxkDev@gmail.com
 
-using System.Net;
-using System.Net.Sockets;
 using DiscordBot.BinaryUtils;
+using DiscordBot.Socket;
 
 Console.WriteLine("Starting socket.");
 
-/*SocketData socketData = new();
-DiscordBot_CSClient.Socket.Socket socket = new(socketData);*/
+SocketData socketData = new();
+Socket socket = new(socketData);
 
-IPEndPoint endpoint = new(IPAddress.Parse("0.0.0.0"), 22222);
-
-Socket listener = new(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-listener.Bind(endpoint);
-listener.Listen(100);
+socket.Listen();
 
 Console.WriteLine("Listening for new connections...");
 
-var handler = await listener.AcceptAsync();
+var handler = await socket.Accept();
 
 Console.WriteLine("Client connected, waiting for initial packet...");
 
 while(true) {
     // Receive message.
     var raw_size = new byte[4];
-    var received = await handler.ReceiveAsync(raw_size, SocketFlags.None);
+    var received = await handler.ReceiveAsync(raw_size, System.Net.Sockets.SocketFlags.None);
     if(received != 4) {
         throw new FormatException("4 bytes expected, received: " + received.ToString());
     }
-    int size = Binary.GetInt(raw_size, 0);
+    BinaryStream init = new(raw_size);
+    uint size = init.GetInt();
     var data = new byte[size];
-    received = await handler.ReceiveAsync(data, SocketFlags.None);
+    received = await handler.ReceiveAsync(data, System.Net.Sockets.SocketFlags.None);
     if(received != size) {
         throw new FormatException(size.ToString() + " bytes expected, received: " + received.ToString());
     }
-    int packetId = Binary.GetShort(data, 0);
+    BinaryStream stream = new(data);
+    ushort packetId = stream.GetShort();
+
+
+    // --- Connect packet. ---
+
     if(packetId != 100) {
         throw new FormatException("Expected Connect packet (100), received: " + packetId.ToString());
     }
-    int version = Binary.GetByte(data, 6);
-    int magic = Binary.GetInt(data, 7);
+    uint uid = stream.GetInt();
+    byte version = stream.GetByte();
+    uint magic = stream.GetInt();
     if(version != 2 || magic != 0x4A61786B) {
         throw new InvalidDataException("Version/Magic does not match expected. (" + version.ToString() + ", " + magic.ToString("X2"));
     }
-    Console.WriteLine("Recieved connect packet, version: " + version.ToString() + " , magic: 0x" + magic.ToString("X2"));
+    Console.WriteLine($"Recieved connect packet ({uid}), version: {version} , magic: 0x"+ magic.ToString("X2"));
+
+    // ---------
+
     //await handler.SendAsync(raw_size, SocketFlags.None);
     //await handler.SendAsync(data, SocketFlags.None); pings back exact same connect packet for testing.
 }
