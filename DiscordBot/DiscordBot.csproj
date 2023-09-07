@@ -18,4 +18,7 @@
   <ItemGroup>
     <None Include="..\.editorconfig" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DiscordBot.BinaryUtils\DiscordBot.BinaryUtils.csproj" />
+  </ItemGroup>
 </Project>

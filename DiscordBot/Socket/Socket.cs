@@ -6,7 +6,7 @@
 // Discord :: JaxkDev
 // Email   :: JaxkDev@gmail.com
 
-namespace DiscordBot.CSClient.Socket;
+namespace DiscordBot.Socket;
 
 public class Socket {
 

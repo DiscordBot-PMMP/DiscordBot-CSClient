@@ -8,7 +8,7 @@
 
 using System.Net;
 using System.Net.Sockets;
-using DiscordBot.CSClient.Binary;
+using DiscordBot.BinaryUtils;
 
 Console.WriteLine("Starting socket.");
 
@@ -17,7 +17,7 @@ DiscordBot_CSClient.Socket.Socket socket = new(socketData);*/
 
 IPEndPoint endpoint = new(IPAddress.Parse("0.0.0.0"), 22222);
 
-System.Net.Sockets.Socket listener = new(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+Socket listener = new(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
 listener.Bind(endpoint);
 listener.Listen(100);

@@ -8,7 +8,7 @@
 
 using System.Text;
 
-namespace DiscordBot.CSClient.Binary;
+namespace DiscordBot.BinaryUtils;
 
 public static class Binary {
 
