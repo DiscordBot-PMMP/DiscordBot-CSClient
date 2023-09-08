@@ -43,16 +43,25 @@ public class Client {
 
     public BinaryStream Read() {
         byte[] bytes = new byte[4];
-        int received = this.socket.Receive(bytes, System.Net.Sockets.SocketFlags.None);
+        int received;
+        try {
+            received = this.socket.Receive(bytes, System.Net.Sockets.SocketFlags.None);
+        }catch(Exception) {
+            throw new Exception("Failed to receive data from socket.");
+        }
         if(received != 4) {
-            throw new FormatException("4 bytes expected, received: " + received.ToString());
+            throw new Exception("4 bytes expected, received: " + received.ToString());
         }
         BinaryStream init = new(bytes);
         uint size = init.GetInt();
         byte[] data = new byte[size];
-        received = this.socket.Receive(data, System.Net.Sockets.SocketFlags.None);
+        try {
+            received = this.socket.Receive(data, System.Net.Sockets.SocketFlags.None);
+        }catch(Exception) {
+            throw new Exception("Failed to receive data from socket.");
+        }
         if(received != size) {
-            throw new FormatException(size.ToString() + " bytes expected, received: " + received.ToString());
+            throw new Exception(size.ToString() + " bytes expected, received: " + received.ToString());
         }
         return new BinaryStream(data);
     }

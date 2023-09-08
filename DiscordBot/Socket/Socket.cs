@@ -35,11 +35,18 @@ public class Socket {
         if(this.client != null) {
             throw new Exception("Client already connected, disconnect before re-accepting new client.");
         }
-        this.client = new(this.socket.Accept());
+        Console.WriteLine("Waiting for new client connection...");
+        try {
+            this.client = new(this.socket.Accept());
+        }catch(Exception) {
+            throw new Exception("Failed to accept new connection.");
+        }
+        Console.WriteLine("Client connected.");
     }
 
     private void DisconnectClient(bool close = true) {
         if(close) {
+            Console.WriteLine("Disconnecting client.");
             this.client?.Close();
         }
         this.taskToken?.Cancel();
@@ -70,13 +77,24 @@ public class Socket {
 
     private void ConnectionLoop() {
         while(this.client == null) {
-            this.AcceptClient();
+            try {
+                this.AcceptClient();
+            }catch(Exception) {
+                throw;
+            }
         }
 
-        Console.WriteLine("Client connected, waiting for initial packet...");
+        Console.WriteLine("Waiting for connect packet...");
 
         // Receive initial connect packet.
-        BinaryStream stream = this.client.Read();
+        BinaryStream stream;
+        try {
+            stream = this.client.Read();
+        }catch(Exception) {
+            Console.Error.WriteLine("Exception occured when reading from client.");
+            this.DisconnectClient();
+            return;
+        }
 
         // --- Connect packet. ---
 
@@ -85,7 +103,6 @@ public class Socket {
         if(packetId != 100) {
             Console.Error.WriteLine("Expected Connect packet (100), received: " + packetId.ToString());
             this.DisconnectClient();
-            this.ConnectionLoop();
             return;
         }
 
@@ -95,7 +112,6 @@ public class Socket {
         if(version != 2 || magic != 0x4A61786B) {
             Console.Error.WriteLine("Version/Magic does not match expected. (" + version.ToString() + ", " + magic.ToString("X2"));
             this.DisconnectClient();
-            this.ConnectionLoop();
             return;
         }
 
@@ -107,30 +123,48 @@ public class Socket {
         response.PutByte(2); //ver
         response.PutInt(0x4A61786B); //magic
 
-        this.client.Write(response);
+        try {
+            this.client.Write(response);
+        }catch(Exception) {
+            Console.Error.WriteLine("Failed to write connect packet to client.");
+            this.DisconnectClient();
+            return;
+        }
 
         // Connected !
-        Console.WriteLine("Connected.");
+        Console.WriteLine("Client fully connected.");
     }
 
     private void BaseLoop() {
-        while(this.client == null) {
-            this.ConnectionLoop();
-        }
+        bool exit = false;
+        while(!exit) {
+            while(this.client == null) {
+                try{
+                    this.ConnectionLoop();
+                }catch(Exception e) {
+                    Console.WriteLine(e.Message);
+                    exit = true;
+                    break;
+                }
+            }
 
-        this.Loop();
+            if(!exit) {
+                this.Loop();
+            }
+        }
     }
     
     private void HeartbeatLoop(CancellationToken cancellationToken) {
         while(!cancellationToken.IsCancellationRequested && this.client != null) {
             if(this.heartbeat != null) {
-                //check.
+                //TODO check.
             }
             BinaryStream packet = new();
             packet.PutShort(1); //PID
             packet.PutInt(0); //UID
             packet.PutInt((uint)DateTimeOffset.UtcNow.ToUnixTimeSeconds());
             _ = this.client.WriteAsync(packet);
+            Console.WriteLine("Writing hp");
             Thread.Sleep(1000);
         }
     }
@@ -138,8 +172,13 @@ public class Socket {
     private void ReadLoop(CancellationToken cancellationToken) {
         Thread.CurrentThread.Name = "ReadThread";
         while (!cancellationToken.IsCancellationRequested && this.client != null) {
-            this.socketData.WriteInbound(this.client.Read());
-            Thread.Sleep(100);
+            try {
+                //TODO Check Disconnect & Heartbeat packets.
+                this.socketData.WriteInbound(this.client.Read());
+            }catch(Exception) {
+                this.DisconnectClient();
+                break;
+            }
         }
     }
 
@@ -147,8 +186,9 @@ public class Socket {
         Thread.CurrentThread.Name = "WriteThread";
         while(!cancellationToken.IsCancellationRequested && this.client != null) {
             BinaryStream? data = this.socketData.ReadOutbound();
-            if(data != null) {
+            while(data != null){
                 _ = this.client.WriteAsync(data);
+                data = this.socketData.ReadOutbound();
             }
             Thread.Sleep(100);
         }
