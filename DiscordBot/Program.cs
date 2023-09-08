@@ -37,6 +37,7 @@ while(true) {
         throw new FormatException(size.ToString() + " bytes expected, received: " + received.ToString());
     }
     BinaryStream stream = new(data);
+
     ushort packetId = stream.GetShort();
 
 
@@ -52,6 +53,38 @@ while(true) {
         throw new InvalidDataException("Version/Magic does not match expected. (" + version.ToString() + ", " + magic.ToString("X2"));
     }
     Console.WriteLine($"Recieved connect packet ({uid}), version: {version} , magic: 0x"+ magic.ToString("X2"));
+
+    BinaryStream response = new();
+    response.PutShort(100); //packet
+    response.PutInt(0); //uid
+    response.PutByte(2); //ver
+    response.PutInt(0x4A61786B); //magic
+
+    BinaryStream d = new();
+    d.PutInt((uint)response.GetBuffer().Length);
+    d.Put(response.GetBuffer());
+
+    await handler.SendAsync(d.GetBuffer(), System.Net.Sockets.SocketFlags.None);
+
+
+    // Receive message.
+    raw_size = new byte[4];
+    received = await handler.ReceiveAsync(raw_size, System.Net.Sockets.SocketFlags.None);
+    if(received != 4) {
+        throw new FormatException("4 bytes expected, received: " + received.ToString());
+    }
+    init = new(raw_size);
+    size = init.GetInt();
+    data = new byte[size];
+    received = await handler.ReceiveAsync(data, System.Net.Sockets.SocketFlags.None);
+    if(received != size) {
+        throw new FormatException(size.ToString() + " bytes expected, received: " + received.ToString());
+    }
+    stream = new(data);
+
+    packetId = stream.GetShort();
+
+    Console.WriteLine("Received packet " + packetId + " - " + stream.ToString());
 
     // ---------
 
