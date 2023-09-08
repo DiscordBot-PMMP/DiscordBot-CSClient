@@ -15,33 +15,22 @@ SocketData socketData = new();
 Socket socket = new(socketData);
 
 socket.Listen();
-
-Console.WriteLine("Listening for new connections...");
-
-var handler = await socket.Accept();
-
-Console.WriteLine("Client connected, waiting for initial packet...");
+Console.WriteLine("Socket listening on " + socketData.ipAddress + ":" + socketData.port);
 
 while(true) {
-    // Receive message.
-    var raw_size = new byte[4];
-    var received = await handler.ReceiveAsync(raw_size, System.Net.Sockets.SocketFlags.None);
-    if(received != 4) {
-        throw new FormatException("4 bytes expected, received: " + received.ToString());
-    }
-    BinaryStream init = new(raw_size);
-    uint size = init.GetInt();
-    var data = new byte[size];
-    received = await handler.ReceiveAsync(data, System.Net.Sockets.SocketFlags.None);
-    if(received != size) {
-        throw new FormatException(size.ToString() + " bytes expected, received: " + received.ToString());
-    }
-    BinaryStream stream = new(data);
 
-    ushort packetId = stream.GetShort();
+    Console.WriteLine("Waiting for connection...");
 
+    Client client = await socket.AcceptClient();
+
+    Console.WriteLine("Client connected, waiting for initial packet...");
+
+    // Receive packet.
+    BinaryStream stream = await client.ReadAsync();
 
     // --- Connect packet. ---
+
+    ushort packetId = stream.GetShort();
 
     if(packetId != 100) {
         throw new FormatException("Expected Connect packet (100), received: " + packetId.ToString());
@@ -64,30 +53,32 @@ while(true) {
     d.PutInt((uint)response.GetBuffer().Length);
     d.Put(response.GetBuffer());
 
-    await handler.SendAsync(d.GetBuffer(), System.Net.Sockets.SocketFlags.None);
+    await client.WriteAsync(d);
 
+    // Connected !
 
-    // Receive message.
-    raw_size = new byte[4];
-    received = await handler.ReceiveAsync(raw_size, System.Net.Sockets.SocketFlags.None);
-    if(received != 4) {
-        throw new FormatException("4 bytes expected, received: " + received.ToString());
+    while(true) {
+        stream = await client.ReadAsync();
+
+        packetId = stream.GetShort();
+        uid = stream.GetInt();
+
+        Console.WriteLine("Received packet " + packetId + " (" + uid + ") - " + stream.ToString());
+
+        if(packetId == 1) {
+            //lazy bounce back heartbeat for testing.
+            d = new();
+            d.PutInt((uint)stream.GetBuffer().Length);
+            d.Put(stream.GetBuffer());
+            _ = client.WriteAsync(d);
+        }else if(packetId == 101) {
+            //disconnect
+            string message = stream.GetString();
+            Console.WriteLine($"Client Disconnected, message: \"{message}\"");
+            socket.DisconnectClient();
+            break;
+        }
     }
-    init = new(raw_size);
-    size = init.GetInt();
-    data = new byte[size];
-    received = await handler.ReceiveAsync(data, System.Net.Sockets.SocketFlags.None);
-    if(received != size) {
-        throw new FormatException(size.ToString() + " bytes expected, received: " + received.ToString());
-    }
-    stream = new(data);
-
-    packetId = stream.GetShort();
-
-    Console.WriteLine("Received packet " + packetId + " - " + stream.ToString());
 
     // ---------
-
-    //await handler.SendAsync(raw_size, SocketFlags.None);
-    //await handler.SendAsync(data, SocketFlags.None); pings back exact same connect packet for testing.
 }

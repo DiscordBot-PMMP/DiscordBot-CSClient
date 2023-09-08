@@ -1,0 +1,60 @@
+﻿// DiscordBot-CSClient
+//
+// Licensed under the Open Software License version 3.0 (OSL-3.0)
+// Copyright (C) 2023-present JaxkDev
+//
+// Discord :: JaxkDev
+// Email   :: JaxkDev@gmail.com
+
+namespace DiscordBot.Socket;
+
+using DiscordBot.BinaryUtils;
+
+public class Client {
+
+    protected readonly System.Net.Sockets.Socket socket;
+
+    public Client(System.Net.Sockets.Socket socket) {
+        this.socket = socket;
+    }
+
+    public void Write(BinaryStream data) {
+        this.Write(data.GetBuffer());
+    }
+
+    public void Write(byte[] data) {
+        this.socket.Send(data, System.Net.Sockets.SocketFlags.None);
+    }
+
+    public Task<int> WriteAsync(BinaryStream data) {
+        return this.WriteAsync(data.GetBuffer());
+    }
+
+    public Task<int> WriteAsync(byte[] data) {
+        //Console.WriteLine("Writing " + Convert.ToHexString(data));
+        return this.socket.SendAsync(data, System.Net.Sockets.SocketFlags.None);
+    }
+
+    public async Task<BinaryStream> ReadAsync() {
+        return await Task.Run(async () => {
+            byte[] bytes = new byte[4];
+            int received = await this.socket.ReceiveAsync(bytes, System.Net.Sockets.SocketFlags.None);
+            if(received != 4) {
+                throw new FormatException("4 bytes expected, received: " + received.ToString());
+            }
+            BinaryStream init = new(bytes);
+            uint size = init.GetInt();
+            byte[] data = new byte[size];
+            received = await this.socket.ReceiveAsync(data, System.Net.Sockets.SocketFlags.None);
+            if(received != size) {
+                throw new FormatException(size.ToString() + " bytes expected, received: " + received.ToString());
+            }
+            return new BinaryStream(data);
+        });
+    }
+
+    public void Close() {
+        this.socket.Close();
+    }
+}
+
