@@ -13,7 +13,7 @@ namespace DiscordBot.Socket;
 
 public class Socket {
 
-    protected readonly SocketData socketData;
+    public readonly SocketData socketData;
     protected System.Net.Sockets.Socket socket;
 
     private Client? client = null;
@@ -55,6 +55,8 @@ public class Socket {
     }
 
     public void Start() {
+        Thread.CurrentThread.Name = "SocketThread";
+        Console.WriteLine("Socket Thread started.");
         this.Listen();
         this.BaseLoop();
     }

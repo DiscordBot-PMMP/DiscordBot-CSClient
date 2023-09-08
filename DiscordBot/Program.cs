@@ -9,17 +9,11 @@
 using DiscordBot.Socket;
 
 Thread.CurrentThread.Name = "MainThread";
+Console.WriteLine("DiscordBot C# Client - v0.1.0");
+Console.WriteLine("By JaxkDev (c) OSL-3.0\n");
 
-Console.WriteLine("Starting socket.");
-
-SocketData socketData = new();
-Socket socket = new(socketData);
-
-Thread socketThread = new(() => {
-    Thread.CurrentThread.Name = "SocketThread";
-    socket.Start();
-});
-
+Socket socket = new(new SocketData());
+Thread socketThread = new(socket.Start);
 socketThread.Start();
 
 
