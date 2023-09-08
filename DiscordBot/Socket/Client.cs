@@ -23,7 +23,10 @@ public class Client {
     }
 
     public void Write(byte[] data) {
-        this.socket.Send(data, System.Net.Sockets.SocketFlags.None);
+        BinaryStream stream = new();
+        stream.PutInt((uint)data.Length);
+        stream.Put(data);
+        this.socket.Send(stream.GetBuffer(), System.Net.Sockets.SocketFlags.None);
     }
 
     public Task<int> WriteAsync(BinaryStream data) {
@@ -32,25 +35,26 @@ public class Client {
 
     public Task<int> WriteAsync(byte[] data) {
         //Console.WriteLine("Writing " + Convert.ToHexString(data));
-        return this.socket.SendAsync(data, System.Net.Sockets.SocketFlags.None);
+        BinaryStream stream = new();
+        stream.PutInt((uint)data.Length);
+        stream.Put(data);
+        return this.socket.SendAsync(stream.GetBuffer(), System.Net.Sockets.SocketFlags.None);
     }
 
-    public async Task<BinaryStream> ReadAsync() {
-        return await Task.Run(async () => {
-            byte[] bytes = new byte[4];
-            int received = await this.socket.ReceiveAsync(bytes, System.Net.Sockets.SocketFlags.None);
-            if(received != 4) {
-                throw new FormatException("4 bytes expected, received: " + received.ToString());
-            }
-            BinaryStream init = new(bytes);
-            uint size = init.GetInt();
-            byte[] data = new byte[size];
-            received = await this.socket.ReceiveAsync(data, System.Net.Sockets.SocketFlags.None);
-            if(received != size) {
-                throw new FormatException(size.ToString() + " bytes expected, received: " + received.ToString());
-            }
-            return new BinaryStream(data);
-        });
+    public BinaryStream Read() {
+        byte[] bytes = new byte[4];
+        int received = this.socket.Receive(bytes, System.Net.Sockets.SocketFlags.None);
+        if(received != 4) {
+            throw new FormatException("4 bytes expected, received: " + received.ToString());
+        }
+        BinaryStream init = new(bytes);
+        uint size = init.GetInt();
+        byte[] data = new byte[size];
+        received = this.socket.Receive(data, System.Net.Sockets.SocketFlags.None);
+        if(received != size) {
+            throw new FormatException(size.ToString() + " bytes expected, received: " + received.ToString());
+        }
+        return new BinaryStream(data);
     }
 
     public void Close() {
