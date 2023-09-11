@@ -6,7 +6,7 @@
 // Discord :: JaxkDev
 // Email   :: JaxkDev@gmail.com
 
-namespace DiscordBot.Socket;
+namespace DiscordBot.Network.Socket;
 
 using DiscordBot.BinaryUtils;
 

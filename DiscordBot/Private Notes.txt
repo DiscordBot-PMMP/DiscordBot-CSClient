@@ -1,0 +1,5 @@
+﻿
+Building standalone file to publish:
+> dotnet publish -r osx-arm64 --self-contained
+                    RID ^
+RIDs = https://github.com/dotnet/sdk/blob/main/src/Layout/redist/PortableRuntimeIdentifierGraph.json

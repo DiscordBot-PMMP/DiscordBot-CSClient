@@ -9,7 +9,7 @@
 using System.Net;
 using DiscordBot.BinaryUtils;
 
-namespace DiscordBot.Socket;
+namespace DiscordBot.Network.Socket;
 
 public class SocketData {
 
@@ -30,7 +30,7 @@ public class SocketData {
         if(this.inbound.Count == 0) {
             return null;
         }
-        var c = this.inbound.First();
+        BinaryStream c = this.inbound.First();
         this.inbound.RemoveAt(0);
         return c;
     }
@@ -39,7 +39,7 @@ public class SocketData {
         if(this.outbound.Count == 0) {
             return null;
         }
-        var c = this.outbound.First();
+        BinaryStream c = this.outbound.First();
         this.outbound.RemoveAt(0);
         return c;
     }

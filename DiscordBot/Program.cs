@@ -6,7 +6,7 @@
 // Discord :: JaxkDev
 // Email   :: JaxkDev@gmail.com
 
-using DiscordBot.Socket;
+using DiscordBot.Network.Socket;
 
 Thread.CurrentThread.Name = "MainThread";
 Console.WriteLine("DiscordBot C# Client - v0.1.0");
@@ -22,5 +22,3 @@ socketThread.Start();
 Console.ReadLine();
 
 socket.Stop();
-
-

@@ -9,7 +9,7 @@
 using System.Net.Sockets;
 using DiscordBot.BinaryUtils;
 
-namespace DiscordBot.Socket;
+namespace DiscordBot.Network.Socket;
 
 public class Socket {
 
