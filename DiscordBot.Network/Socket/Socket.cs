@@ -7,6 +7,7 @@
 // Email   :: JaxkDev@gmail.com
 
 using System.Net.Sockets;
+using System.Reflection;
 using DiscordBot.BinaryUtils;
 
 namespace DiscordBot.Network.Socket;

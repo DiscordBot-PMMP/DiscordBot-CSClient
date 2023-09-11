@@ -11,8 +11,8 @@ using System.Text;
 
 namespace DiscordBot.BinaryUtils;
 
-
 // Sure could use a load of method overloading but I prefer type in func name
+
 public class BinaryStream {
 
     private readonly List<byte> buffer;
