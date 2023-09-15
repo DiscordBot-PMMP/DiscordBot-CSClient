@@ -34,7 +34,6 @@ public class Socket {
     }
 
     private void AcceptClient() {
-        this.heartbeat = (uint)DateTimeOffset.Now.ToUnixTimeSeconds();
         if(this.client != null) {
             throw new Exception("Client already connected, disconnect before re-accepting new client.");
         }

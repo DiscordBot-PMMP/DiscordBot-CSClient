@@ -30,7 +30,7 @@ public class Client {
         BinaryStream stream = new();
         stream.PutInt((uint)data.Length);
         stream.Put(data);
-        Console.WriteLine("Writing " + Convert.ToHexString(stream.GetBuffer()));
+        //Console.WriteLine("Writing " + Convert.ToHexString(stream.GetBuffer()));
         this.socket.Send(stream.GetBuffer(), System.Net.Sockets.SocketFlags.None);
     }
 
@@ -45,7 +45,7 @@ public class Client {
         BinaryStream stream = new();
         stream.PutInt((uint)data.Length);
         stream.Put(data);
-        Console.WriteLine("Writing " + Convert.ToHexString(stream.GetBuffer()));
+        //Console.WriteLine("Writing " + Convert.ToHexString(stream.GetBuffer()));
         return this.socket.SendAsync(stream.GetBuffer(), System.Net.Sockets.SocketFlags.None);
     }
 

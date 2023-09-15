@@ -23,7 +23,6 @@ public abstract class Packet : IBinarySerializable {
                 //32bit int overflow, reset.
                 UID_COUNT = 1;
             }
-            Console.WriteLine(UID_COUNT);
             this.UID = UID_COUNT++;
         }
     }
