@@ -74,7 +74,7 @@ if(args.Length > 0) {
     return;
 }
 
-if(settings.Discord.token.Length < 15) {
+if(settings.Discord.token.Length <= 20) {
     Console.WriteLine("You must set-up a discord token before starting the program,\nSee https://github.com/DiscordBot-PMMP/DiscordBot-CSClient/wiki to set up your bot and retreive a token.");
     Console.WriteLine("Then apply your token with:\n./" + Assembly.GetExecutingAssembly().GetName().Name + " set-token TOKEN-HERE\n\nPress enter to quit.");
     Console.ReadLine();
