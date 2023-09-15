@@ -9,6 +9,7 @@
 namespace DiscordBot.Network.Socket;
 
 using DiscordBot.BinaryUtils;
+using DiscordBot.Network.Packets;
 
 public class Client {
 
@@ -18,30 +19,37 @@ public class Client {
         this.socket = socket;
     }
 
-    public void Write(BinaryStream data) {
-        this.Write(data.GetBuffer());
+    public void WritePacket(Packet pk) {
+        BinaryStream bs = new();
+        bs.PutShort((ushort)(pk.GetType().GetProperty("Id")?.GetGetMethod()?.Invoke(null, null) ?? throw new Exception("Failed to get ID from packet " + pk.ToString())));
+        bs.Put(pk.BinarySerialize().GetBuffer());
+        this.Write(bs.GetBuffer());
     }
 
     public void Write(byte[] data) {
         BinaryStream stream = new();
         stream.PutInt((uint)data.Length);
         stream.Put(data);
+        Console.WriteLine("Writing " + Convert.ToHexString(stream.GetBuffer()));
         this.socket.Send(stream.GetBuffer(), System.Net.Sockets.SocketFlags.None);
     }
 
-    public Task<int> WriteAsync(BinaryStream data) {
-        return this.WriteAsync(data.GetBuffer());
+    public Task<int> WriteAsyncPacket(Packet pk) {
+        BinaryStream bs = new();
+        bs.PutShort((ushort)(pk.GetType().GetProperty("Id")?.GetGetMethod()?.Invoke(null, null) ?? throw new Exception("Failed to get ID from packet " + pk.ToString())));
+        bs.Put(pk.BinarySerialize().GetBuffer());
+        return this.WriteAsync(bs.GetBuffer());
     }
 
     public Task<int> WriteAsync(byte[] data) {
-        //Console.WriteLine("Writing " + Convert.ToHexString(data));
         BinaryStream stream = new();
         stream.PutInt((uint)data.Length);
         stream.Put(data);
+        Console.WriteLine("Writing " + Convert.ToHexString(stream.GetBuffer()));
         return this.socket.SendAsync(stream.GetBuffer(), System.Net.Sockets.SocketFlags.None);
     }
 
-    public BinaryStream Read() {
+    public Packet ReadPacket() {
         byte[] bytes = new byte[4];
         int received;
         try {
@@ -63,7 +71,8 @@ public class Client {
         if(received != size) {
             throw new Exception(size.ToString() + " bytes expected, received: " + received.ToString());
         }
-        return new BinaryStream(data);
+        BinaryStream bs = new(data);
+        return NetworkAPI.DeserializePacket(bs);
     }
 
     public void Close() {

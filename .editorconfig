@@ -7,3 +7,6 @@ dotnet_style_qualification_for_method = true
 dotnet_style_qualification_for_property = true
 dotnet_diagnostic.IDE0009.severity = warning
 dotnet_diagnostic.IDE0003.severity = none
+
+# IDE0002: Simplify Member Access
+dotnet_diagnostic.IDE0002.severity = none

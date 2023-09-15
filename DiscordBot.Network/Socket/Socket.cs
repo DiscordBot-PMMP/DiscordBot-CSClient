@@ -7,8 +7,9 @@
 // Email   :: JaxkDev@gmail.com
 
 using System.Net.Sockets;
-using System.Reflection;
-using DiscordBot.BinaryUtils;
+using DiscordBot.Network.Packets;
+using DiscordBot.Network.Packets.External;
+using DiscordBot.Network.Packets.Misc;
 
 namespace DiscordBot.Network.Socket;
 
@@ -19,7 +20,7 @@ public class Socket {
 
     private Client? client = null;
     private CancellationTokenSource? taskToken = null;
-    private int? heartbeat = null;
+    private uint? heartbeat = null;
 
     public Socket(SocketData socketData) {
         this.socketData = socketData;
@@ -33,6 +34,7 @@ public class Socket {
     }
 
     private void AcceptClient() {
+        this.heartbeat = (uint)DateTimeOffset.Now.ToUnixTimeSeconds();
         if(this.client != null) {
             throw new Exception("Client already connected, disconnect before re-accepting new client.");
         }
@@ -46,7 +48,7 @@ public class Socket {
     }
 
     private void DisconnectClient(bool close = true) {
-        if(close) {
+        if(close && this.client != null) {
             Console.WriteLine("Disconnecting client.");
             this.client?.Close();
         }
@@ -59,6 +61,7 @@ public class Socket {
         Thread.CurrentThread.Name = "SocketThread";
         Console.WriteLine("Socket Thread started.");
         this.Listen();
+        this.RegisterInternalHandlers();
         this.BaseLoop();
     }
 
@@ -66,6 +69,12 @@ public class Socket {
         this.DisconnectClient();
         this.client?.Close();
         this.socket.Close();
+    }
+
+    private void RegisterInternalHandlers() {
+        /*Heartbeat.AddHandler(new Action<Heartbeat>((Heartbeat pk) => {
+            Console.WriteLine("Handling packet !!! - " + pk.UID);
+        }));*/
     }
 
     private void Loop() {
@@ -90,9 +99,9 @@ public class Socket {
         Console.WriteLine("Waiting for connect packet...");
 
         // Receive initial connect packet.
-        BinaryStream stream;
+        Packet _pk;
         try {
-            stream = this.client.Read();
+            _pk = this.client.ReadPacket();
         }catch(Exception) {
             Console.Error.WriteLine("Exception occured when reading from client.");
             this.DisconnectClient();
@@ -101,33 +110,31 @@ public class Socket {
 
         // --- Connect packet. ---
 
-        ushort packetId = stream.GetShort();
-
-        if(packetId != 100) {
-            Console.Error.WriteLine("Expected Connect packet (100), received: " + packetId.ToString());
+        if(_pk.GetType().IsSubclassOf(typeof(Connect))) {
+            Console.Error.WriteLine($"Expected Connect packet ({Connect.Id}) received: {typeof(Connect)}");
             this.DisconnectClient();
             return;
         }
 
-        uint uid = stream.GetInt();
-        byte version = stream.GetByte();
-        uint magic = stream.GetInt();
+        Connect packet = (Connect)_pk;
+
+        byte version = packet.Version;
+        uint magic = packet.Magic;
         if(version != 2 || magic != 0x4A61786B) {
             Console.Error.WriteLine("Version/Magic does not match expected. (" + version.ToString() + ", " + magic.ToString("X2"));
             this.DisconnectClient();
             return;
         }
 
-        Console.WriteLine($"Recieved connect packet ({uid}), version: {version} , magic: 0x" + magic.ToString("X2"));
+        Console.WriteLine($"Recieved connect packet, version: {version} , magic: 0x" + magic.ToString("X2"));
 
-        BinaryStream response = new();
-        response.PutShort(100); //packet
-        response.PutInt(0); //uid
-        response.PutByte(2); //ver
-        response.PutInt(0x4A61786B); //magic
+        Connect response = new() {
+            Version = 2,
+            Magic = 0x4A61786B
+        };
 
         try {
-            this.client.Write(response);
+            this.client.WritePacket(response);
         }catch(Exception) {
             Console.Error.WriteLine("Failed to write connect packet to client.");
             this.DisconnectClient();
@@ -159,15 +166,16 @@ public class Socket {
     
     private void HeartbeatLoop(CancellationToken cancellationToken) {
         while(!cancellationToken.IsCancellationRequested && this.client != null) {
+            uint time = (uint)DateTimeOffset.Now.ToUnixTimeSeconds();
             if(this.heartbeat != null) {
-                //TODO check.
+               if(time - this.heartbeat > 120) {
+                    // No response received/parsed in 2 minutes.
+                    Console.WriteLine("Client has not responded in 2 minutes, disconnecting.");
+                    this.DisconnectClient();
+                    return;
+                }
             }
-            BinaryStream packet = new();
-            packet.PutShort(1); //PID
-            packet.PutInt(0); //UID
-            packet.PutInt((uint)DateTimeOffset.UtcNow.ToUnixTimeSeconds());
-            _ = this.client.WriteAsync(packet);
-            Console.WriteLine("Writing hp");
+            _ = this.client.WriteAsyncPacket(new Heartbeat() { Timestamp = time });
             Thread.Sleep(1000);
         }
     }
@@ -176,8 +184,9 @@ public class Socket {
         Thread.CurrentThread.Name = "ReadThread";
         while (!cancellationToken.IsCancellationRequested && this.client != null) {
             try {
-                //TODO Check Disconnect & Heartbeat packets.
-                this.socketData.WriteInbound(this.client.Read());
+                Packet pk = this.client.ReadPacket();
+                //pk.Handle(); TODO
+                this.socketData.WriteInbound(pk);
             }catch(Exception) {
                 this.DisconnectClient();
                 break;
@@ -188,9 +197,9 @@ public class Socket {
     private void WriteLoop(CancellationToken cancellationToken) {
         Thread.CurrentThread.Name = "WriteThread";
         while(!cancellationToken.IsCancellationRequested && this.client != null) {
-            BinaryStream? data = this.socketData.ReadOutbound();
+            Packet? data = this.socketData.ReadOutbound();
             while(data != null){
-                _ = this.client.WriteAsync(data);
+                _ = this.client.WriteAsyncPacket(data);
                 data = this.socketData.ReadOutbound();
             }
             Thread.Sleep(100);

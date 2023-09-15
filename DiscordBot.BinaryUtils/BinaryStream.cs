@@ -18,6 +18,8 @@ public class BinaryStream {
     private readonly List<byte> buffer;
     private int offset;
 
+    public bool Eof { get { return this.offset == this.buffer.Count; }}
+
     public BinaryStream(List<byte> buffer, int offset = 0) {
         this.offset = offset;
         this.buffer = buffer;

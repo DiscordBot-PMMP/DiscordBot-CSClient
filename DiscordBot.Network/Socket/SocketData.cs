@@ -7,7 +7,7 @@
 // Email   :: JaxkDev@gmail.com
 
 using System.Net;
-using DiscordBot.BinaryUtils;
+using DiscordBot.Network.Packets;
 
 namespace DiscordBot.Network.Socket;
 
@@ -17,8 +17,8 @@ public class SocketData {
     public readonly ushort port;
     public readonly IPEndPoint ipEndPoint;
 
-    public readonly List<BinaryStream> outbound = new();
-    public readonly List<BinaryStream> inbound = new();
+    public readonly List<Packet> outbound = new();
+    public readonly List<Packet> inbound = new();
 
     public SocketData(string ipAddress = "0.0.0.0", ushort port = 22222) {
         this.ipAddress = IPAddress.Parse(ipAddress);
@@ -26,29 +26,29 @@ public class SocketData {
         this.ipEndPoint = new(this.ipAddress, this.port);
     }
 
-    public BinaryStream? ReadInbound() {
+    public Packet? ReadInbound() {
         if(this.inbound.Count == 0) {
             return null;
         }
-        BinaryStream c = this.inbound.First();
+        Packet c = this.inbound.First();
         this.inbound.RemoveAt(0);
         return c;
     }
 
-    public BinaryStream? ReadOutbound() {
+    public Packet? ReadOutbound() {
         if(this.outbound.Count == 0) {
             return null;
         }
-        BinaryStream c = this.outbound.First();
+        Packet c = this.outbound.First();
         this.outbound.RemoveAt(0);
         return c;
     }
 
-    public void WriteInbound(BinaryStream data) {
+    public void WriteInbound(Packet data) {
         this.inbound.Add(data);
     }
 
-    public void WriteOutbound(BinaryStream data) {
+    public void WriteOutbound(Packet data) {
         this.outbound.Add(data);
     }
 }

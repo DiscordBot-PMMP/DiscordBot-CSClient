@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Version>0.1.0</Version>
@@ -20,9 +20,15 @@
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Socket\" />
+    <None Remove="Packets\" />
+    <None Remove="Packets\Misc\" />
+    <None Remove="Packets\External\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Socket\" />
+    <Folder Include="Packets\" />
+    <Folder Include="Packets\Misc\" />
+    <Folder Include="Packets\External\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DiscordBot.BinaryUtils\DiscordBot.BinaryUtils.csproj" />
