@@ -28,4 +28,8 @@ sealed public class Heartbeat : Packet {
         base.FromBinary(binaryStream);
         this.Timestamp = binaryStream.GetInt();
     }
+
+    public override void Handle() {
+        PacketHandler<Heartbeat>.Invoke(Heartbeat.Id, this);
+    }
 }

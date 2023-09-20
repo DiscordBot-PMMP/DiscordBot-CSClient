@@ -85,8 +85,6 @@ DiscordBot.Network.Socket.Socket socket = new(new DiscordBot.Network.Socket.Sock
 Thread socketThread = new(socket.Start);
 socketThread.Start();
 
-// Build a config object, using env vars and JSON providers.
-
 //Console.WriteLine(settings.Discord.token);
 
 //Discord here.

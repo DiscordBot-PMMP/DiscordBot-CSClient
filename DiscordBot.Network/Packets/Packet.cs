@@ -27,6 +27,8 @@ public abstract class Packet : IBinarySerializable {
         }
     }
 
+    public abstract void Handle();
+
     //--- Binary ---//
 
     public virtual void FromBinary(BinaryStream binaryStream) {

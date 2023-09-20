@@ -49,12 +49,12 @@ public class Client {
         return this.socket.SendAsync(stream.GetBuffer(), System.Net.Sockets.SocketFlags.None);
     }
 
-    public Packet ReadPacket() {
+    public Packet ReadPacket(bool handle = true) {
         byte[] bytes = new byte[4];
         int received;
         try {
             received = this.socket.Receive(bytes, System.Net.Sockets.SocketFlags.None);
-        }catch(Exception) {
+        } catch(Exception) {
             throw new Exception("Failed to receive data from socket.");
         }
         if(received != 4) {
@@ -65,14 +65,18 @@ public class Client {
         byte[] data = new byte[size];
         try {
             received = this.socket.Receive(data, System.Net.Sockets.SocketFlags.None);
-        }catch(Exception) {
+        } catch(Exception) {
             throw new Exception("Failed to receive data from socket.");
         }
         if(received != size) {
             throw new Exception(size.ToString() + " bytes expected, received: " + received.ToString());
         }
         BinaryStream bs = new(data);
-        return NetworkAPI.DeserializePacket(bs);
+        Packet pk = NetworkAPI.GetPacket(bs);
+        if(handle) {
+            pk.Handle();
+        }
+        return pk;
     }
 
     public void Close() {

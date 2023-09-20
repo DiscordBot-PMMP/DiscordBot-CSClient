@@ -28,4 +28,8 @@ sealed public class Disconnect : Packet {
         base.FromBinary(binaryStream);
         this.Message = binaryStream.GetString();
     }
+
+    public override void Handle() {
+        PacketHandler<Disconnect>.Invoke(Disconnect.Id, this);
+    }
 }

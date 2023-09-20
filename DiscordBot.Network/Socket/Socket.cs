@@ -71,9 +71,8 @@ public class Socket {
     }
 
     private void RegisterInternalHandlers() {
-        /*Heartbeat.AddHandler(new Action<Heartbeat>((Heartbeat pk) => {
-            Console.WriteLine("Handling packet !!! - " + pk.UID);
-        }));*/
+        PacketHandler<Heartbeat>.AddHandler(Heartbeat.Id, new Action<Heartbeat>(this.HandleHeartbeat));
+        PacketHandler<Disconnect>.AddHandler(Disconnect.Id, new Action<Disconnect>(this.HandleDisconnect));
     }
 
     private void Loop() {
@@ -98,9 +97,13 @@ public class Socket {
         Console.WriteLine("Waiting for connect packet...");
 
         // Receive initial connect packet.
-        Packet _pk;
+        Connect packet;
         try {
-            _pk = this.client.ReadPacket();
+            Packet pk = this.client.ReadPacket(false);
+            if(pk is not Connect) {
+                throw new Exception("Expecting Connect packet, but got " + pk.ToString());
+            }
+            packet = (Connect)pk;
         }catch(Exception) {
             Console.Error.WriteLine("Exception occured when reading from client.");
             this.DisconnectClient();
@@ -108,14 +111,6 @@ public class Socket {
         }
 
         // --- Connect packet. ---
-
-        if(_pk.GetType().IsSubclassOf(typeof(Connect))) {
-            Console.Error.WriteLine($"Expected Connect packet ({Connect.Id}) received: {typeof(Connect)}");
-            this.DisconnectClient();
-            return;
-        }
-
-        Connect packet = (Connect)_pk;
 
         byte version = packet.Version;
         uint magic = packet.Magic;
@@ -162,7 +157,16 @@ public class Socket {
             }
         }
     }
-    
+
+    private void HandleDisconnect(Disconnect pk) {
+        Console.WriteLine("Disconnection request received: " + pk.Message);
+        this.DisconnectClient();
+    }
+
+    private void HandleHeartbeat(Heartbeat pk) {
+        this.heartbeat = pk.Timestamp;
+    }
+
     private void HeartbeatLoop(CancellationToken cancellationToken) {
         while(!cancellationToken.IsCancellationRequested && this.client != null) {
             uint time = (uint)DateTimeOffset.Now.ToUnixTimeSeconds();
@@ -183,9 +187,7 @@ public class Socket {
         Thread.CurrentThread.Name = "ReadThread";
         while (!cancellationToken.IsCancellationRequested && this.client != null) {
             try {
-                Packet pk = this.client.ReadPacket();
-                //pk.Handle(); TODO
-                this.socketData.WriteInbound(pk);
+                this.client.ReadPacket();
             }catch(Exception) {
                 this.DisconnectClient();
                 break;

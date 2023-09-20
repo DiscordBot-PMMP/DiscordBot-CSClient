@@ -34,13 +34,18 @@ public sealed class NetworkAPI {
         };
     }
 
-    public static Packet DeserializePacket(BinaryStream binaryStream) {
+    public static ushort GetPacketId(Packet packet) {
+        Type type = packet.GetType();
+        return (ushort)(type.GetProperty("Id")?.GetValue(null) ?? throw new Exception("Failed to get ID"));
+    }
+
+    public static Packet GetPacket(BinaryStream binaryStream) {
         ushort pid = binaryStream.GetShort();
-        Packet packet = NetworkAPI.PACKET_MAP[pid]?.Invoke() ?? throw new ArgumentOutOfRangeException($"PID '{pid}' does not exist.");
-        packet.FromBinary(binaryStream);
+        Packet pk = NetworkAPI.PACKET_MAP[pid]?.Invoke() ?? throw new ArgumentOutOfRangeException($"PID '{pid}' does not exist.");
+        pk.FromBinary(binaryStream);
         if(!binaryStream.Eof) {
-            Console.WriteLine("Warning: Unread bytes left in packet (" + packet.GetType() + ", " + packet.UID + ")");
+            Console.WriteLine("Warning: Unread bytes left in packet (" + pid + ", " + binaryStream.GetBuffer() + ")"); ;
         }
-        return packet;
+        return pk;
     }
 }

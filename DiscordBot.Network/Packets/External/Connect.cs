@@ -31,4 +31,8 @@ sealed public class Connect : Packet {
         this.Version = binaryStream.GetByte();
         this.Magic = binaryStream.GetInt();
     }
+
+    public override void Handle() {
+        PacketHandler<Connect>.Invoke(Connect.Id, this);
+    }
 }
