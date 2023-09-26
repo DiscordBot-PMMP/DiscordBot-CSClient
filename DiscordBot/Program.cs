@@ -81,7 +81,8 @@ if(settings.Discord.token.Length <= 20) {
     return;
 }
 
-DiscordBot.Network.Socket.Socket socket = new(new DiscordBot.Network.Socket.SocketData());
+DiscordBot.Network.Socket.SocketData socketData = new();
+DiscordBot.Network.Socket.Socket socket = new(socketData);
 Thread socketThread = new(socket.Start);
 socketThread.Start();
 
