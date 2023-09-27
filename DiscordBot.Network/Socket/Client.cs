@@ -19,7 +19,7 @@ public class Client {
         this.socket = socket;
     }
 
-    public void WritePacket(Packet pk) {
+    public void WritePacket(IOutboundPacket pk) {
         BinaryStream bs = new();
         bs.PutShort((ushort)(pk.GetType().GetProperty("Id")?.GetGetMethod()?.Invoke(null, null) ?? throw new Exception("Failed to get ID from packet " + pk.ToString())));
         bs.Put(pk.BinarySerialize().GetBuffer());
@@ -34,7 +34,7 @@ public class Client {
         this.socket.Send(stream.GetBuffer(), System.Net.Sockets.SocketFlags.None);
     }
 
-    public Task<int> WriteAsyncPacket(Packet pk) {
+    public Task<int> WriteAsyncPacket(IOutboundPacket pk) {
         BinaryStream bs = new();
         bs.PutShort((ushort)(pk.GetType().GetProperty("Id")?.GetGetMethod()?.Invoke(null, null) ?? throw new Exception("Failed to get ID from packet " + pk.ToString())));
         bs.Put(pk.BinarySerialize().GetBuffer());

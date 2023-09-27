@@ -17,7 +17,7 @@ public class SocketData {
     public readonly ushort port;
     public readonly IPEndPoint ipEndPoint;
 
-    public readonly List<Packet> outbound = new();
+    public readonly List<IOutboundPacket> outbound = new();
 
     public SocketData(string ipAddress = "0.0.0.0", ushort port = 22222) {
         this.ipAddress = IPAddress.Parse(ipAddress);
@@ -25,16 +25,16 @@ public class SocketData {
         this.ipEndPoint = new(this.ipAddress, this.port);
     }
 
-    public Packet? ReadOutbound() {
+    public IOutboundPacket? ReadOutbound() {
         if(this.outbound.Count == 0) {
             return null;
         }
-        Packet c = this.outbound.First();
+        IOutboundPacket c = this.outbound.First();
         this.outbound.RemoveAt(0);
         return c;
     }
 
-    public void WriteOutbound(Packet data) {
+    public void WriteOutbound(IOutboundPacket data) {
         this.outbound.Add(data);
     }
 }

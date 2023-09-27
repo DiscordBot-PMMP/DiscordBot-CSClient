@@ -18,18 +18,19 @@ public sealed class NetworkAPI {
     public static readonly ushort VERSION = 2;
     public static readonly uint MAGIC = 0x4A61786B;
 
-    public static readonly IReadOnlyDictionary<ushort, Func<Packet>> PACKET_MAP;
+    public static readonly IReadOnlyDictionary<ushort, Func<BinaryStream, Packet>> PACKET_MAP;
 
     static NetworkAPI() {
-        NetworkAPI.PACKET_MAP = new Dictionary<ushort, Func<Packet>>{
+        //Only IInboundPackets need registering here.
+        NetworkAPI.PACKET_MAP = new Dictionary<ushort, Func<BinaryStream, Packet>>{
             /* 01-99 Misc Packets */
-            /* 01 */ { Heartbeat.Id, new Func<Heartbeat>(() => new Heartbeat(false)) },
+            /* 01 */ { Heartbeat.Id, new Func<BinaryStream, Heartbeat>((BinaryStream bs) => { Heartbeat h = new(false); h.FromBinary(bs); return h; }) },
             //{ 2, typeof(Resolution) },
             /* 03-99 Reserved */
 
             /* 100-199 External->PMMP Packets */
-            /* 100 */ { Connect.Id, new Func<Connect>(() => new Connect(false)) },
-            /* 101 */ { Disconnect.Id, new Func<Disconnect>(() => new Disconnect(false)) },
+            /* 100 */ { Connect.Id, new Func<BinaryStream, Connect>((BinaryStream bs) => {Connect c = new(false); c.FromBinary(bs); return c; }) },
+            /* 101 */ { Disconnect.Id, new Func<BinaryStream, Disconnect>((BinaryStream bs) => {Disconnect d = new(false); d.FromBinary(bs); return d; }) },
             /* 102-199 Reserved */
         };
     }
@@ -41,8 +42,7 @@ public sealed class NetworkAPI {
 
     public static Packet GetPacket(BinaryStream binaryStream) {
         ushort pid = binaryStream.GetShort();
-        Packet pk = NetworkAPI.PACKET_MAP[pid]?.Invoke() ?? throw new ArgumentOutOfRangeException($"PID '{pid}' does not exist.");
-        pk.FromBinary(binaryStream);
+        Packet pk = NetworkAPI.PACKET_MAP[pid]?.Invoke(binaryStream) ?? throw new ArgumentOutOfRangeException($"PID '{pid}' does not exist.");
         if(!binaryStream.Eof) {
             Console.WriteLine("Warning: Unread bytes left in packet (" + pid + ", " + binaryStream.GetBuffer() + ")"); ;
         }

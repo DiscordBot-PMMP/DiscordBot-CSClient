@@ -198,7 +198,7 @@ public class Socket {
     private void WriteLoop(CancellationToken cancellationToken) {
         Thread.CurrentThread.Name = "WriteThread";
         while(!cancellationToken.IsCancellationRequested && this.client != null) {
-            Packet? data = this.socketData.ReadOutbound();
+            IOutboundPacket? data = this.socketData.ReadOutbound();
             while(data != null){
                 _ = this.client.WriteAsyncPacket(data);
                 data = this.socketData.ReadOutbound();

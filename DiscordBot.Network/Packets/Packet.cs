@@ -6,16 +6,14 @@
 // Discord :: JaxkDev
 // Email   :: JaxkDev@gmail.com
 
-using DiscordBot.BinaryUtils;
-
 namespace DiscordBot.Network.Packets;
 
-public abstract class Packet : IBinarySerializable {
+public abstract class Packet {
 
     public static ushort Id { get; }
 
     private static uint UID_COUNT = 1;
-    public uint UID { get; private set; }
+    public uint UID { get; protected set; }
 
     public Packet(bool? Uid = true) {
         if(Uid ?? true) {
@@ -28,12 +26,4 @@ public abstract class Packet : IBinarySerializable {
     }
 
     public abstract void Handle();
-
-    //--- Binary ---//
-
-    public virtual void FromBinary(BinaryStream binaryStream) {
-        this.UID = binaryStream.GetInt();
-    }
-
-    public abstract BinaryStream BinarySerialize();
 }
